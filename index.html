@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Task Board</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;font-size:13px;background:#f6f5f2;color:#1c1b18;min-height:100vh}
+.screen{display:none}
+.screen.active{display:block;min-height:100vh}
+.hw{max-width:900px;margin:0 auto;padding:2rem 1rem 3rem}
+.hh{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px}
+.brand{font-size:18px;font-weight:600}
+.brand-sub{font-size:10px;color:#a8a49c;margin-top:2px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.pcard{background:#fff;border:1px solid #e4e2da;border-radius:12px;padding:1rem;cursor:pointer;transition:all .2s;position:relative}
+.pcard:hover{box-shadow:0 4px 12px rgba(0,0,0,.1);transform:translateY(-1px)}
+.pbar{height:4px;border-radius:2px;margin-bottom:10px}
+.pname{font-size:13px;font-weight:600;margin-bottom:3px}
+.pdesc{font-size:11px;color:#a8a49c;margin-bottom:10px;line-height:1.4;min-height:14px}
+.pmeta{display:flex;gap:8px;flex-wrap:wrap}
+.pst{font-size:10px;color:#a8a49c;display:flex;align-items:center;gap:3px}
+.pdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.pmenu{position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;color:#a8a49c;font-size:14px;padding:2px 6px;border-radius:5px;opacity:0}
+.pcard:hover .pmenu{opacity:1}
+.pmenu:hover{background:#f0efe9}
+.newpcard{background:none;border:1.5px dashed #d0cec5;border-radius:12px;padding:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;color:#a8a49c;font-size:12px;min-height:100px;transition:all .2s}
+.newpcard:hover{border-color:#6b6960;color:#6b6960;background:#fff}
+.empty-home{grid-column:1/-1;text-align:center;padding:3rem;color:#a8a49c}
+.btn{border:none;border-radius:8px;padding:6px 13px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+.btn-p{background:#1c1b18;color:#fff}.btn-p:hover{background:#333}
+.btn-g{background:#fff;border:1px solid #d0cec5;color:#6b6960}.btn-g:hover{background:#f0efe9}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;padding-top:60px;z-index:200}
+.modal{background:#fff;border-radius:12px;padding:1.25rem;width:350px;max-width:95vw;max-height:82vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.15)}
+.mtitle{font-size:14px;font-weight:600;margin-bottom:1rem}
+.field{margin-bottom:11px}
+.field label{font-size:10px;color:#a8a49c;display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.field input,.field select,.field textarea{width:100%;font-size:13px;padding:7px 10px;border:1px solid #e4e2da;border-radius:8px;background:#fff;color:#1c1b18;outline:none;font-family:inherit}
+.field input:focus,.field select:focus{border-color:#2355b0}
+.field textarea{resize:vertical;min-height:52px}
+.cpick{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+.csw{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s}
+.csw.sel{border-color:#1c1b18;transform:scale(1.15)}
+.mfoot{display:flex;gap:7px;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid #e4e2da;align-items:center}
+.mfoot button{font-size:12px;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500;border:none}
+.mfp{background:#1c1b18;color:#fff}.mfp:hover{background:#333}
+.mfg{border:1px solid #d0cec5!important;background:none;color:#6b6960}.mfg:hover{background:#f0efe9}
+.mfd{border:1px solid #c0392b!important;background:none;color:#c0392b;margin-right:auto}.mfd:hover{background:#fcecea}
+.cpanel{background:#fcecea;border:1px solid #f5c6c2;border-radius:8px;padding:10px 12px;margin-top:10px}
+.cpanel p{font-size:12px;color:#c0392b;margin-bottom:8px;line-height:1.5}
+.crow{display:flex;gap:6px}
+.crow button{font-size:12px;padding:5px 12px;border-radius:7px;cursor:pointer;font-family:inherit;font-weight:500;border:none}
+.cdel{background:#c0392b;color:#fff}
+.ccan{border:1px solid #d0cec5!important;background:none;color:#6b6960}
+.bw{max-width:1100px;margin:0 auto;padding:1rem 1rem 3rem}
+.btop{display:flex;align-items:center;gap:7px;margin-bottom:1rem;flex-wrap:wrap}
+.backbtn{background:#fff;border:1px solid #d0cec5;border-radius:8px;padding:5px 11px;cursor:pointer;color:#6b6960;font-size:12px;font-weight:500;font-family:inherit}
+.backbtn:hover{background:#f0efe9}
+.bpname{font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px;flex:1}
+.pcdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.savebtn{border:none;border-radius:8px;padding:5px 13px;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;font-family:inherit}
+.savebtn.uns{background:#1c1b18;color:#fff}
+.savebtn.sav{background:none;border:1px solid #2a6b4a;color:#2a6b4a;font-weight:500}
+.savebtn:disabled{opacity:.35;cursor:not-allowed}
+.udot{width:7px;height:7px;border-radius:50%;background:#c97b1a;flex-shrink:0}
+.sbar{font-size:10px;color:#a8a49c;text-align:right;margin-bottom:6px;min-height:14px}
+.mets{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:1rem}
+.met{background:#fff;border-radius:9px;padding:9px 10px;text-align:center;border:1px solid #e4e2da}
+.mnum{font-size:18px;font-weight:600}
+.mlbl{font-size:10px;color:#a8a49c;margin-top:2px}
+.pwrap{margin-bottom:1rem}
+.pbar2{height:5px;background:#f0efe9;border-radius:3px;overflow:hidden}
+.pfill{height:100%;background:#2a6b4a;border-radius:3px;transition:width .4s}
+.plbl{font-size:11px;color:#a8a49c;margin-bottom:4px;display:flex;justify-content:space-between}
+.tabs{display:flex;gap:4px;margin-bottom:1rem}
+.tab{font-size:12px;padding:5px 14px;border-radius:8px;border:1px solid transparent;cursor:pointer;background:none;color:#a8a49c;font-weight:500;font-family:inherit}
+.tab.act{background:#fff;color:#1c1b18;border-color:#e4e2da}
+.fbar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:.75rem}
+.fc{font-size:11px;padding:2px 9px;border-radius:99px;border:1px solid #e4e2da;background:#fff;cursor:pointer;color:#6b6960;font-family:inherit}
+.fc.act{background:#1c1b18;color:#fff;border-color:#1c1b18}
+.bwrap2{display:flex;flex-direction:column;gap:9px}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;align-items:start}
+.col{background:#f0efe9;border-radius:11px;padding:9px;min-height:120px;transition:background .2s,border .2s;border:2px solid transparent}
+.col.dov{background:#e8f0ff;border:2px dashed #5b8dee}
+.colh{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;padding:0 2px}
+.coltit{font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px}
+.colcnt{font-size:10px;background:#fff;border:1px solid #e4e2da;border-radius:99px;padding:1px 6px;color:#a8a49c}
+.coldl{font-size:10px;color:#5b8dee;text-align:center;padding:3px 0;display:none}
+.col.dov .coldl{display:block}
+.card{background:#fff;border:1px solid #e4e2da;border-radius:9px;padding:8px 10px;margin-bottom:5px;cursor:grab;transition:border-color .15s,opacity .15s,box-shadow .15s;user-select:none}
+.card:hover{border-color:#d0cec5;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.card.drag{opacity:.3}
+.card.cdov{border:2px dashed #5b8dee;background:#f0f5ff}
+.card.od{border-left:3px solid #c0392b;border-radius:0 9px 9px 0}
+.card.pen{border-color:#c97b1a}
+.cname{font-size:12px;font-weight:500;line-height:1.4;margin-bottom:4px;word-break:break-word}
+.csubs{margin:5px 0 4px;padding-left:2px}
+.srow{display:flex;align-items:center;gap:5px;padding:2px 0;border-radius:4px}
+.srow.sdov{background:#eaf0fb}
+.sh2{font-size:11px;color:#d0cec5;cursor:grab;padding:0 2px;flex-shrink:0;user-select:none}
+.sch{width:13px;height:13px;border-radius:3px;border:1.5px solid #d0cec5;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff}
+.sch.dc{background:#2a6b4a;border-color:#2a6b4a}
+.sch.dc::after{content:'✓';font-size:9px;color:#fff;font-weight:700}
+.snm{font-size:11px;color:#6b6960;flex:1}
+.snm.dt{text-decoration:line-through;color:#a8a49c}
+.sej{font-size:10px;color:#a8a49c;background:none;border:none;cursor:pointer;padding:1px 4px;border-radius:3px;flex-shrink:0;display:none}
+.srow:hover .sej{display:block}
+.sej:hover{color:#2355b0;background:#eaf0fb}
+.sprog{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.spbar{flex:1;height:3px;background:#f0efe9;border-radius:2px;overflow:hidden}
+.spfill{height:100%;background:#2a6b4a;border-radius:2px}
+.splbl{font-size:10px;color:#a8a49c;flex-shrink:0}
+.cfoot{display:flex;flex-wrap:wrap;gap:3px;align-items:center;margin-top:4px}
+.tag{font-size:10px;padding:1px 6px;border-radius:99px;font-weight:500;white-space:nowrap}
+.tag-blue{background:#eaf0fb;color:#2355b0}
+.tag-amber{background:#fdf3e3;color:#c97b1a}
+.tag-green{background:#e8f4ee;color:#2a6b4a}
+.tag-purple{background:#eeedfe;color:#3c3489}
+.tag-gray{background:#f0efe9;color:#6b6960}
+.dtag{font-size:10px;color:#a8a49c;display:flex;align-items:center;gap:2px;margin-left:auto}
+.dtag.od{color:#c0392b;font-weight:600}
+.acbtn{display:flex;align-items:center;gap:4px;font-size:11px;color:#a8a49c;background:none;border:none;cursor:pointer;padding:3px 2px;width:100%;font-family:inherit}
+.acbtn:hover{color:#6b6960}
+.emp{font-size:11px;color:#a8a49c;text-align:center;padding:18px 0;line-height:1.8}
+.dh{font-size:10px;color:#a8a49c;text-align:center;margin-bottom:9px;padding:6px 10px;background:#fff;border-radius:8px;border:1px dashed #e4e2da}
+.tz{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;border-radius:11px;border:2px dashed #e4e2da;background:#fff;color:#a8a49c;font-size:12px;min-height:50px;transition:all .2s}
+.tz.tr{border-color:#c0392b;background:#fcecea;color:#c0392b}
+.tz.th{border-color:#c0392b;background:#fcd9d6;color:#a00}
+.ti{font-size:17px;transition:transform .2s}
+.tz.th .ti{transform:scale(1.2) rotate(-10deg)}
+.gw{overflow-x:auto;background:#fff;border-radius:11px;padding:.875rem;border:1px solid #e4e2da}
+.gantt{min-width:600px}
+.ghdr{display:flex;margin-bottom:5px}
+.glc{width:160px;flex-shrink:0;font-size:10px;color:#a8a49c;padding:0 6px}
+.gday{text-align:center;font-size:10px;color:#a8a49c;border-left:1px solid #e4e2da;padding:2px 0}
+.gday.td{color:#2355b0;font-weight:700;border-left:2px solid #2355b0}
+.grow{display:flex;align-items:center;margin-bottom:5px;min-height:26px}
+.glbl{width:160px;flex-shrink:0;font-size:11px;padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:#6b6960}
+.glbl:hover{color:#2355b0}
+.gtrk{flex:1;position:relative;height:20px;background:#f0efe9;border-radius:4px}
+.gbar{position:absolute;height:100%;border-radius:4px;display:flex;align-items:center;padding:0 7px;font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;cursor:pointer;font-weight:500}
+.gbar:hover{opacity:.85}
+.gtl{position:absolute;top:-4px;bottom:-4px;width:2px;background:#2355b0;z-index:2;border-radius:1px}
+.tpick{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.topt{font-size:11px;padding:2px 9px;border-radius:99px;cursor:pointer;border:1.5px solid transparent;font-weight:500;font-family:inherit}
+.topt.sel{border-color:currentColor}
+.ssec{margin-bottom:11px}
+.ssec>label{font-size:10px;color:#a8a49c;display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.sle{margin-bottom:6px}
+.ser{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.ser input{flex:1;font-size:12px;padding:5px 8px;border:1px solid #e4e2da;border-radius:7px;outline:none;font-family:inherit}
+.ser input:focus{border-color:#2355b0}
+.sdb{background:none;border:none;cursor:pointer;color:#a8a49c;font-size:14px;padding:2px 5px;flex-shrink:0;line-height:1}
+.sdb:hover{color:#c0392b}
+.asb{display:flex;align-items:center;gap:5px;font-size:11px;color:#6b6960;background:none;border:1px dashed #d0cec5;border-radius:7px;padding:5px 9px;cursor:pointer;width:100%;font-family:inherit;font-weight:500}
+.asb:hover{background:#f0efe9}
+@media(max-width:640px){.board{grid-template-columns:1fr}.mets{grid-template-columns:repeat(2,1fr)}.pgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="screen active" id="s-home">
+  <div class="hw">
+    <div class="hh">
+      <div><div class="brand">🗂 Task Board</div><div class="brand-sub">project workspace</div></div>
+      <button class="btn btn-p" onclick="openNPM()">＋ New project</button>
+    </div>
+    <div class="pgrid" id="pgrid"></div>
+  </div>
+</div>
+
+<!-- BOARD -->
+<div class="screen" id="s-board">
+  <div class="bw">
+    <div class="btop">
+      <button class="backbtn" onclick="goHome()">← Projects</button>
+      <div class="bpname"><div class="pcdot" id="bdot"></div><span id="btitle"></span></div>
+      <button class="btn btn-g" onclick="openModal(null,'todo')">＋ เพิ่ม</button>
+      <button class="btn btn-g" onclick="doExport()">⬇ Export</button>
+      <button class="btn btn-g" onclick="doImport()">⬆ Import</button>
+      <button class="savebtn sav" id="sbtn" onclick="saveNow()" disabled>✓ Saved</button>
+    </div>
+    <div class="sbar" id="sbar"></div>
+    <div class="mets" id="mets"></div>
+    <div class="pwrap">
+      <div class="plbl"><span>ความคืบหน้า</span><span id="ppct">0%</span></div>
+      <div class="pbar2"><div class="pfill" id="pfill" style="width:0%"></div></div>
+    </div>
+    <div class="tabs">
+      <button class="tab act" onclick="setView('board')">📋 Board</button>
+      <button class="tab" onclick="setView('gantt')">📅 Gantt</button>
+    </div>
+    <div id="v-board">
+      <div class="dh">ลากข้าม column · ลากทับกัน → sub-task · ↗ ดึง sub-task ออก · ลากลง 🗑 → ลบ</div>
+      <div class="fbar">
+        <button class="fc act" onclick="setF('all')">ทั้งหมด</button>
+        <button class="fc" onclick="setF('overdue')" style="color:#c0392b">⚠ Overdue</button>
+        <button class="fc" onclick="setF('ICR')">ICR</button>
+        <button class="fc" onclick="setF('LGD')">LGD</button>
+        <button class="fc" onclick="setF('PD')">PD</button>
+        <button class="fc" onclick="setF('FWL')">FWL</button>
+        <button class="fc" onclick="setF('อื่นๆ')">อื่นๆ</button>
+      </div>
+      <div class="bwrap2">
+        <div class="board" id="board"></div>
+        <div class="tz" id="tz" ondragover="onTDO(event)" ondragleave="onTDL(event)" ondrop="onTDrop(event)">
+          <span class="ti">🗑</span><span id="tlbl">ลากการ์ดมาวางที่นี่เพื่อลบ</span>
+        </div>
+      </div>
+    </div>
+    <div id="v-gantt" style="display:none">
+      <div class="gw"><div class="gantt" id="gantt"></div></div>
+    </div>
+  </div>
+</div>
+
+<div id="mr"></div>
+<input type="file" id="fi" accept=".json" style="display:none" onchange="handleImport(event)">
+
+<script>
+const TC={ICR:'blue',LGD:'purple',PD:'amber',FWL:'green',Board:'gray','อื่นๆ':'gray'};
+const TAGS=['ICR','LGD','PD','FWL','Board','อื่นๆ'];
+const COLS=[{id:'todo',label:'To do',color:'#888',icon:'○'},{id:'inprog',label:'In progress',color:'#c97b1a',icon:'◑'},{id:'done',label:'Done',color:'#2a6b4a',icon:'●'}];
+const CC={todo:'#b0ada6',inprog:'#c97b1a',done:'#2a6b4a'};
+const PC=['#2355b0','#2a6b4a','#c97b1a','#7c3aed','#c0392b','#0891b2','#b45309','#64748b'];
+const SK='tb_projs_v1', TK=id=>'tb_tasks_'+id;
+
+const DEF=[];
+
+let projs=[],pid=null,tasks=[];
+let af='all',curView='board',dirty=false,pids=new Set();
+let dragId=null,dsi=null,msubs=[],eid=null,dovCid=null;
+let epid=null,sc=PC[0];
+
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(el=>{el.classList.remove('active');el.style.display='none';});
+  const el=document.getElementById(id);
+  if(el){el.classList.add('active');el.style.display='block';}
+}
+
+// localStorage helpers
+function lsGet(k){try{return localStorage.getItem(k);}catch(x){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(x){}}
+function lsDel(k){try{localStorage.removeItem(k);}catch(x){}}
+function getPT(id){try{const r=lsGet(TK(id));return r?JSON.parse(r).map(t=>({...t,subs:t.subs||[]})):[];}catch(x){return[];}}
+function setPT(id,t){lsSet(TK(id),JSON.stringify(t));}
+
+function init(){
+  try{const r=lsGet(SK);projs=r?JSON.parse(r):[];}catch(x){projs=[];}
+  renderHome();
+}
+
+function renderHome(){
+  const grid=document.getElementById('pgrid');
+  if(!projs.length){grid.innerHTML='<div class="empty-home"><div style="font-size:32px;opacity:.4;margin-bottom:10px">📂</div><p>ยังไม่มี project<br>กด <strong>New project</strong></p></div>';return;}
+  grid.innerHTML=projs.map(p=>{
+    const t=getPT(p.id),tot=t.length,dn=t.filter(x=>x.col==='done').length,ip=t.filter(x=>x.col==='inprog').length,pct=tot?Math.round(dn/tot*100):0;
+    return`<div class="pcard" onclick="openP('${p.id}')">
+      <div class="pbar" style="background:${p.color}"></div>
+      <div class="pname">${e(p.name)}</div>
+      <div class="pdesc">${e(p.desc||'')}</div>
+      <div class="pmeta">
+        <div class="pst"><span class="pdot" style="background:${p.color}"></span>${tot} งาน</div>
+        <div class="pst"><span class="pdot" style="background:#c97b1a"></span>${ip} ทำอยู่</div>
+        <div class="pst"><span class="pdot" style="background:#2a6b4a"></span>${dn} เสร็จ ${pct}%</div>
+      </div>
+      <button class="pmenu" onclick="openEPM(event,'${p.id}')">⋯</button>
+    </div>`;
+  }).join('')+`<div class="newpcard" onclick="openNPM()"><span style="font-size:18px">＋</span><span>New project</span></div>`;
+}
+
+function openP(id){
+  pid=id;const p=projs.find(x=>x.id===id);if(!p)return;
+  tasks=getPT(id);
+  document.getElementById('btitle').textContent=p.name;
+  document.getElementById('bdot').style.background=p.color;
+  showScreen('s-board');
+  af='all';curView='board';dirty=false;pids=new Set();
+  markSav();
+  document.querySelectorAll('.tab').forEach(el=>{const m=el.getAttribute('onclick')&&el.getAttribute('onclick').match(/setView\('(\w+)'\)/);if(m)el.classList.toggle('act',m[1]==='board');});
+  document.getElementById('v-board').style.display='';
+  document.getElementById('v-gantt').style.display='none';
+  document.querySelectorAll('.fc').forEach(el=>{const m=el.getAttribute('onclick')&&el.getAttribute('onclick').match(/setF\('(.+?)'\)/);if(m)el.classList.toggle('act',m[1]==='all');});
+  setStatus('โหลดแล้ว · '+new Date().toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}));
+  renderBoard();
+}
+
+function goHome(){showScreen('s-home');pid=null;tasks=[];renderHome();}
+
+// project modal
+function openNPM(){epid=null;sc=PC[0];showPM(null);}
+function openEPM(ev,id){ev.stopPropagation();epid=id;const p=projs.find(x=>x.id===id);if(!p)return;sc=p.color||PC[0];showPM(p);}
+function showPM(p){
+  const sw=PC.map(c=>`<div class="csw${sc===c?' sel':''}" style="background:${c}" onclick="pickC('${c}')"></div>`).join('');
+  document.getElementById('mr').innerHTML=`
+    <div class="ov" id="ov" onclick="if(event.target.id==='ov')cM()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="mtitle">${p?'แก้ไข project':'New project'}</div>
+        <div class="field"><label>ชื่อ project</label><input id="pm-n" type="text" value="${p?e(p.name):''}" placeholder="ชื่อ project..."></div>
+        <div class="field"><label>คำอธิบาย</label><textarea id="pm-d" placeholder="คำอธิบาย...">${p?e(p.desc||''):''}</textarea></div>
+        <div class="field"><label>สี</label><div class="cpick" id="cpick">${sw}</div></div>
+        ${p?`<div class="cpanel" id="delpanel" style="display:none">
+          <p>ลบ "<strong>${e(p.name)}</strong>" และงานทั้งหมด?</p>
+          <div class="crow"><button class="cdel" onclick="delP('${p.id}')">ลบเลย</button><button class="ccan" onclick="document.getElementById('delpanel').style.display='none'">ยกเลิก</button></div>
+        </div>`:''}
+        <div class="mfoot">
+          ${p?`<button class="mfd" onclick="document.getElementById('delpanel').style.display='block'">🗑 ลบ</button>`:''}
+          <button class="mfg" onclick="cM()">ยกเลิก</button>
+          <button class="mfp" onclick="savPM()">บันทึก</button>
+        </div>
+      </div>
+    </div>`;
+  setTimeout(()=>document.getElementById('pm-n')?.focus(),50);
+}
+function pickC(c){sc=c;const sw=PC.map(cc=>`<div class="csw${sc===cc?' sel':''}" style="background:${cc}" onclick="pickC('${cc}')"></div>`).join('');const cp=document.getElementById('cpick');if(cp)cp.innerHTML=sw;}
+function savPM(){
+  const n=document.getElementById('pm-n')?.value.trim();if(!n)return;
+  const d=document.getElementById('pm-d')?.value.trim()||'';
+  if(epid){const p=projs.find(x=>x.id===epid);if(p){p.name=n;p.desc=d;p.color=sc;}}
+  else{const id='proj_'+Date.now();projs.push({id,name:n,desc:d,color:sc,at:Date.now()});setPT(id,[]);}
+  lsSet(SK,JSON.stringify(projs));cM();renderHome();
+}
+function delP(id){projs=projs.filter(x=>x.id!==id);lsDel(TK(id));lsSet(SK,JSON.stringify(projs));cM();renderHome();}
+
+// board
+function isOD(d){return d&&new Date(d)<new Date(new Date().toDateString());}
+function fmtD(d){return d?new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short'}):''}
+function tc(t){return'tag tag-'+(TC[t]||'gray')}
+function filt(col){return tasks.filter(t=>{if(t.col!==col)return false;if(af==='all')return true;if(af==='overdue')return isOD(t.due);return(t.tags||[]).includes(af);});}
+function setStatus(m){const el=document.getElementById('sbar');if(el)el.textContent=m;}
+function markDirty(id){dirty=true;if(id)pids.add(id);const b=document.getElementById('sbtn');if(b){b.disabled=false;b.className='savebtn uns';b.innerHTML='<span class="udot"></span> Save';}}
+function markSav(){dirty=false;pids.clear();const b=document.getElementById('sbtn');if(b){b.disabled=true;b.className='savebtn sav';b.innerHTML='✓ Saved';}}
+function saveNow(){if(!dirty||!pid)return;setPT(pid,tasks);setStatus('บันทึกแล้ว · '+new Date().toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}));markSav();renderBoard();}
+function doExport(){const b=new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);const p=projs.find(x=>x.id===pid);a.download=(p?p.name.replace(/\s+/g,'_'):'tasks')+'_'+new Date().toISOString().slice(0,10)+'.json';a.click();}
+function doImport(){document.getElementById('fi').click();}
+function handleImport(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=x=>{try{tasks=JSON.parse(x.target.result).map(t=>({...t,subs:t.subs||[]}));markDirty(null);renderBoard();setStatus('Import สำเร็จ — กด Save');}catch(err){setStatus('Import ไม่สำเร็จ');}};r.readAsText(f);ev.target.value='';}
+function setView(v){curView=v;document.getElementById('v-board').style.display=v==='board'?'':'none';document.getElementById('v-gantt').style.display=v==='gantt'?'':'none';document.querySelectorAll('.tab').forEach(el=>{const m=el.getAttribute('onclick')&&el.getAttribute('onclick').match(/setView\('(\w+)'\)/);if(m)el.classList.toggle('act',m[1]===v);});if(v==='gantt')renderGantt();else renderBoard();}
+function setF(f){af=f;document.querySelectorAll('.fc').forEach(el=>{const m=el.getAttribute('onclick')&&el.getAttribute('onclick').match(/setF\('(.+?)'\)/);if(m)el.classList.toggle('act',m[1]===f);});renderBoard();}
+function renderMets(){
+  const tot=tasks.length,dn=tasks.filter(t=>t.col==='done').length,ip=tasks.filter(t=>t.col==='inprog').length,od=tasks.filter(t=>t.col!=='done'&&isOD(t.due)).length,pct=tot?Math.round(dn/tot*100):0;
+  document.getElementById('mets').innerHTML=[[tot,'ทั้งหมด',''],[ip,'กำลังทำ','#c97b1a'],[dn,'เสร็จ','#2a6b4a'],[od,'Overdue','#c0392b']].map(([n,l,c])=>`<div class="met"><div class="mnum"${c?` style="color:${c}"`:''}>${n}</div><div class="mlbl">${l}</div></div>`).join('');
+  document.getElementById('pfill').style.width=pct+'%';document.getElementById('ppct').textContent=pct+'%';
+}
+function renderBoard(){
+  renderMets();
+  document.getElementById('board').innerHTML=COLS.map(col=>{
+    const ct=filt(col.id);
+    return`<div class="col" id="col-${col.id}" ondragover="onCO(event,'${col.id}')" ondragleave="onCL(event,'${col.id}')" ondrop="onCD(event,'${col.id}')">
+      <div class="colh"><span class="coltit" style="color:${col.color}">${col.icon} ${col.label}</span><span class="colcnt">${ct.length}</span></div>
+      <div class="coldl">วางที่นี่ → ${col.label}</div>
+      ${ct.length===0?`<div class="emp">ไม่มีงาน<br><small style="opacity:.5">ลากการ์ดมาวาง</small></div>`:''}
+      ${ct.map(t=>cardH(t)).join('')}
+      ${col.id!=='done'?`<button class="acbtn" onclick="openModal(null,'${col.id}')">＋ เพิ่มงาน</button>`:''}
+    </div>`;
+  }).join('');
+}
+function cardH(t){
+  const od=t.col!=='done'&&isOD(t.due),subs=t.subs||[],sd=subs.filter(s=>s.done).length,st=subs.length,sp=st?Math.round(sd/st*100):0;
+  const sr=subs.map(s=>`<div class="srow" id="sr-${s.id}" draggable="true" ondragstart="onSDS(event,'${t.id}','${s.id}')" ondragend="onSDE(event,'${s.id}')" ondragover="onSDO(event,'${t.id}','${s.id}')" ondragleave="onSDL('${s.id}')" ondrop="onSDD(event,'${t.id}','${s.id}')"><span class="sh2">⠿</span><div class="sch${s.done?' dc':''}" onclick="togSub('${t.id}','${s.id}',event)"></div><span class="snm${s.done?' dt':''}">${e(s.name)}</span><button class="sej" onclick="ejectS('${t.id}','${s.id}',event)">↗</button></div>`).join('');
+  return`<div class="card${od?' od':''}${pids.has(t.id)?' pen':''}" id="c-${t.id}" draggable="true" ondragstart="onDS(event,'${t.id}')" ondragend="onDE(event,'${t.id}')" ondragover="onDO(event,'${t.id}')" ondragleave="onDL(event,'${t.id}')" ondrop="onDD(event,'${t.id}')" onclick="openModal('${t.id}','${t.col}')">
+    <div class="cname">${e(t.name)}</div>
+    ${st>0?`<div class="sprog"><div class="spbar"><div class="spfill" style="width:${sp}%"></div></div><span class="splbl">${sd}/${st}</span></div><div class="csubs" onclick="event.stopPropagation()">${sr}</div>`:''}
+    <div class="cfoot">${(t.tags||[]).map(tg=>`<span class="${tc(tg)}">${tg}</span>`).join('')}${t.due?`<span class="dtag${od?' od':''}">📅 ${fmtD(t.due)}${od?' ⚠':''}</span>`:''}</div>
+  </div>`;
+}
+function togSub(tid,sid,ev){ev.stopPropagation();const t=tasks.find(x=>x.id===tid);if(!t)return;const s=t.subs.find(x=>x.id===sid);if(s){s.done=!s.done;markDirty(tid);renderBoard();}}
+function ejectS(pi,si,ev){ev.stopPropagation();const p=tasks.find(x=>x.id===pi);if(!p)return;const s=p.subs.find(x=>x.id===si);if(!s)return;p.subs=p.subs.filter(x=>x.id!==si);tasks.push({id:'u'+Date.now(),name:s.name,col:p.col,tags:[],due:'',subs:[]});markDirty(pi);renderBoard();}
+function setTZ(a,h){const el=document.getElementById('tz'),lb=document.getElementById('tlbl');if(!el)return;el.className='tz'+(h?' th':a?' tr':'');if(lb)lb.textContent=h?'ปล่อยเพื่อลบ!':a?'ลากมาวางลบ':'ลากการ์ดมาวางที่นี่เพื่อลบ';}
+function onTDO(ev){if(!dragId&&!dsi)return;ev.preventDefault();setTZ(true,true);}
+function onTDL(ev){setTZ(!!(dragId||dsi),false);}
+function onTDrop(ev){ev.preventDefault();setTZ(false,false);if(dsi){const{p:pi,s:si}=dsi;const p=tasks.find(x=>x.id===pi);if(p){p.subs=p.subs.filter(x=>x.id!==si);markDirty(pi);}dsi=null;clrD();renderBoard();return;}if(dragId){tasks=tasks.filter(x=>x.id!==dragId);markDirty(null);dragId=null;clrD();renderBoard();}}
+function clrD(){document.querySelectorAll('.card').forEach(el=>el.classList.remove('drag','cdov'));document.querySelectorAll('.col').forEach(el=>el.classList.remove('dov'));document.querySelectorAll('.srow').forEach(el=>el.classList.remove('sdov'));setTZ(false,false);}
+function onDS(ev,id){dragId=id;dsi=null;ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',id);setTZ(true,false);setTimeout(()=>document.getElementById('c-'+id)?.classList.add('drag'),0);}
+function onDE(ev,id){dragId=null;dovCid=null;clrD();}
+function onDO(ev,tid){if(dsi)return;if(!dragId||dragId===tid)return;ev.preventDefault();ev.stopPropagation();dovCid=tid;document.querySelectorAll('.card').forEach(el=>el.classList.remove('cdov'));document.getElementById('c-'+tid)?.classList.add('cdov');document.querySelectorAll('.col').forEach(el=>el.classList.remove('dov'));}
+function onDL(ev,id){if(!ev.currentTarget.contains(ev.relatedTarget)){document.getElementById('c-'+id)?.classList.remove('cdov');dovCid=null;}}
+function onDD(ev,tid){ev.preventDefault();ev.stopPropagation();if(dsi){const{p:pi,s:si}=dsi;if(pi===tid){dsi=null;clrD();return;}const p=tasks.find(x=>x.id===pi),tg=tasks.find(x=>x.id===tid);if(p&&tg){const s=p.subs.find(x=>x.id===si);if(s){p.subs=p.subs.filter(x=>x.id!==si);tg.subs=[...(tg.subs||[]),{id:'u'+Date.now(),name:s.name,done:s.done}];markDirty(pi);markDirty(tid);}}dsi=null;clrD();renderBoard();return;}if(!dragId||dragId===tid)return;const src=tasks.find(x=>x.id===dragId),tg=tasks.find(x=>x.id===tid);if(src&&tg){tg.subs=[...(tg.subs||[]),{id:'u'+Date.now(),name:src.name,done:src.col==='done'}];tasks=tasks.filter(x=>x.id!==dragId);markDirty(tg.id);}dragId=null;clrD();renderBoard();}
+function onCO(ev,col){ev.preventDefault();if(!dovCid){document.querySelectorAll('.col').forEach(el=>el.classList.remove('dov'));document.getElementById('col-'+col)?.classList.add('dov');}}
+function onCL(ev,col){const el=document.getElementById('col-'+col);if(el&&!el.contains(ev.relatedTarget))el.classList.remove('dov');}
+function onCD(ev,col){ev.preventDefault();clrD();if(dsi){const{p:pi,s:si}=dsi;const p=tasks.find(x=>x.id===pi);if(!p){dsi=null;return;}const s=p.subs.find(x=>x.id===si);if(!s){dsi=null;return;}p.subs=p.subs.filter(x=>x.id!==si);tasks.push({id:'u'+Date.now(),name:s.name,col,tags:[],due:'',subs:[]});markDirty(pi);dsi=null;renderBoard();return;}if(dragId&&!dovCid){const t=tasks.find(x=>x.id===dragId);if(t&&t.col!==col){t.col=col;markDirty(dragId);}dragId=null;renderBoard();return;}dragId=null;dovCid=null;}
+function onSDS(ev,pi,si){dsi={p:pi,s:si};dragId=null;ev.dataTransfer.effectAllowed='move';ev.stopPropagation();setTZ(true,false);setTimeout(()=>document.getElementById('sr-'+si)?.classList.add('sdrag'),0);}
+function onSDE(ev,si){dsi=null;clrD();}
+function onSDO(ev,pi,si){if(!dsi)return;ev.preventDefault();ev.stopPropagation();if(dsi.s===si)return;document.querySelectorAll('.srow').forEach(el=>el.classList.remove('sdov'));document.getElementById('sr-'+si)?.classList.add('sdov');}
+function onSDL(si){document.getElementById('sr-'+si)?.classList.remove('sdov');}
+function onSDD(ev,pi,tsi){ev.preventDefault();ev.stopPropagation();if(!dsi||dsi.s===tsi)return;if(dsi.p===pi){const t=tasks.find(x=>x.id===pi);if(!t)return;const fi=t.subs.findIndex(x=>x.id===dsi.s),ti=t.subs.findIndex(x=>x.id===tsi);if(fi<0||ti<0)return;const[m]=t.subs.splice(fi,1);t.subs.splice(ti,0,m);markDirty(pi);}dsi=null;clrD();renderBoard();}
+function renderGantt(){
+  renderMets();const hd=tasks.filter(t=>t.due);
+  if(!hd.length){document.getElementById('gantt').innerHTML='<div style="font-size:12px;color:#a8a49c;padding:1rem 0">ยังไม่มีงานที่มี due date</div>';return;}
+  const dues=hd.map(t=>new Date(t.due));let mn=new Date(Math.min(...dues)),mx=new Date(Math.max(...dues));
+  mn.setDate(mn.getDate()-3);mx.setDate(mx.getDate()+3);
+  const td=Math.max(14,Math.round((mx-mn)/86400000)+1),tdy=new Date(new Date().toDateString());
+  const days=[];for(let i=0;i<td;i++){const d=new Date(mn);d.setDate(mn.getDate()+i);days.push(d);}
+  const ti=days.findIndex(d=>d.getTime()===tdy.getTime()),dw=100/td;
+  const hdr=days.map((d,i)=>{const it=d.getTime()===tdy.getTime();const lb=i===0||d.getDate()===1||it?d.toLocaleDateString('th-TH',{day:'numeric',month:'short'}):'';return`<div class="gday${it?' td':''}" style="flex:0 0 ${dw}%;min-width:${dw}%">${lb}</div>`;}).join('');
+  const tl=ti>=0?`<div style="position:absolute;left:${ti*dw+dw/2}%;top:0;bottom:0;width:2px;background:#2355b0;border-radius:1px;z-index:2"></div>`:'';
+  const rows=hd.sort((a,b)=>new Date(a.due)-new Date(b.due)).map(t=>{
+    const dd=new Date(t.due),di=days.findIndex(d=>d.getTime()===dd.getTime());if(di<0)return'';
+    const si2=Math.max(0,di-1),lft=si2*dw,wid=Math.max(dw,(di-si2+1)*dw);
+    const od=t.col!=='done'&&isOD(t.due),bc=od?'#c0392b':(CC[t.col]||'#b0ada6');
+    const itl=ti>=0?`<div class="gtl" style="left:${ti*dw+dw/2}%"></div>`:'';
+    return`<div class="grow"><div class="glbl" title="${e(t.name)}" onclick="openModal('${t.id}','${t.col}')">${e(t.name)}</div><div class="gtrk">${itl}<div class="gbar" style="left:${lft}%;width:${wid}%;background:${bc}" onclick="openModal('${t.id}','${t.col}')">${fmtD(t.due)}</div></div></div>`;
+  }).join('');
+  document.getElementById('gantt').innerHTML=`<div class="ghdr"><div class="glc">งาน</div><div style="flex:1;position:relative;display:flex">${tl}${hdr}</div></div><div style="border-top:1px solid #e4e2da;margin-bottom:9px"></div>${rows}`;
+}
+function openModal(id,col){
+  eid=id;const t=id?tasks.find(x=>x.id===id):null;
+  msubs=t?JSON.parse(JSON.stringify(t.subs||[])):[];
+  const co=COLS.map(c=>`<option value="${c.id}"${(t?t.col:col)===c.id?' selected':''}>${c.label}</option>`).join('');
+  const to=TAGS.map(tg=>{const sl=t&&(t.tags||[]).includes(tg);return`<span class="topt tag-${TC[tg]||'gray'}${sl?' sel':''}" onclick="this.classList.toggle('sel')">${tg}</span>`;}).join('');
+  document.getElementById('mr').innerHTML=`
+    <div class="ov" id="ov" onclick="if(event.target.id==='ov')cM()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="mtitle">${t?'แก้ไขงาน':'เพิ่มงานใหม่'}</div>
+        <div class="field"><label>ชื่องาน</label><input id="mn" type="text" value="${t?e(t.name):''}" placeholder="ชื่องาน..."></div>
+        <div class="field"><label>คอลัมน์</label><select id="mc">${co}</select></div>
+        <div class="field"><label>Due date</label><input id="md" type="date" value="${t&&t.due?t.due:''}"></div>
+        <div class="field"><label>Tag</label><div class="tpick">${to}</div></div>
+        <div class="ssec field"><label>Sub-tasks</label><div class="sle" id="sle"></div><button class="asb" onclick="addSF()">＋ เพิ่ม sub-task</button></div>
+        ${t?`<div class="cpanel" id="dp" style="display:none"><p>🗑 ลบ "<strong>${e(t.name)}</strong>"?<br><small style="color:#999">ไม่สามารถยกเลิกได้</small></p><div class="crow"><button class="cdel" onclick="doD('${t.id}')">ลบเลย</button><button class="ccan" onclick="document.getElementById('dp').style.display='none'">ยกเลิก</button></div></div>`:''}
+        <div class="mfoot">
+          ${t?`<button class="mfd" onclick="document.getElementById('dp').style.display='block'">🗑 ลบ</button>`:''}
+          <button class="mfg" onclick="cM()">ยกเลิก</button>
+          <button class="mfp" onclick="savM()">บันทึก</button>
+        </div>
+      </div>
+    </div>`;
+  rSL();setTimeout(()=>document.getElementById('mn')?.focus(),50);
+}
+function rSL(){const el=document.getElementById('sle');if(!el)return;el.innerHTML=msubs.map((s,i)=>`<div class="ser"><input type="text" value="${e(s.name||'')}" placeholder="ชื่อ sub-task..." oninput="msubs[${i}].name=this.value"><button class="sdb" onclick="rmSF(${i})">✕</button></div>`).join('');}
+function addSF(){msubs.push({id:'s'+Date.now(),name:'',done:false});rSL();const ins=document.querySelectorAll('#sle input');if(ins.length)ins[ins.length-1].focus();}
+function rmSF(i){msubs.splice(i,1);rSL();}
+function savM(){
+  const n=document.getElementById('mn')?.value.trim();if(!n)return;
+  const col=document.getElementById('mc').value,due=document.getElementById('md').value;
+  const tags=[...document.querySelectorAll('.modal .topt.sel')].map(el=>el.textContent.trim());
+  document.querySelectorAll('#sle input').forEach((inp,i)=>{if(msubs[i])msubs[i].name=inp.value.trim();});
+  const subs=msubs.filter(s=>s.name);let cid;
+  if(eid){const t=tasks.find(x=>x.id===eid);if(t){t.name=n;t.col=col;t.due=due;t.tags=tags;t.subs=subs;cid=t.id;}}
+  else{const nt={id:'u'+Date.now(),name:n,col,due,tags,subs};tasks.push(nt);cid=nt.id;}
+  cM();markDirty(cid);renderBoard();
+}
+function doD(id){tasks=tasks.filter(x=>x.id!==id);cM();markDirty(null);renderBoard();}
+function cM(){document.getElementById('mr').innerHTML='';msubs=[];}
+
+init();
+</script>
+</body>
+</html>
