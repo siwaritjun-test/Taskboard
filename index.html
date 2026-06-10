@@ -894,7 +894,7 @@ function applyTheme(color){
   document.querySelectorAll('.card,.modal,.met,.pcard,.gw,.tl-wrap,.tl-toolbar,.dh,.tz,.tl-header,.theme-panel,.backbtn,.btn-g,.col,.pgrid .newpcard').forEach(el=>{
     if(el.classList.contains('col')){el.style.background=surface2;}
     else if(el.classList.contains('newpcard')){el.style.borderColor=isDark?'rgba(255,255,255,0.2)':'#d0cec5';}
-    else{el.style.background=isDark?'rgba(255,255,255,0.07)':''';}
+    else{el.style.background=isDark?'rgba(255,255,255,0.07)':"";}
     if(isDark){el.style.borderColor='rgba(255,255,255,0.12)';el.style.color='#e8e6e3';}
     else{el.style.borderColor='';el.style.color='';}
   });
