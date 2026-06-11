@@ -184,8 +184,11 @@ body{font-family:system-ui,sans-serif;font-size:13px;background:#f6f5f2;color:#1
 .tl-bar{position:absolute;top:10px;height:32px;border-radius:8px;display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:500;color:#fff;cursor:pointer;transition:opacity .15s;white-space:nowrap;overflow:hidden;user-select:none;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 .tl-bar:hover{opacity:.88}
 .tl-bar.dep-source{box-shadow:0 0 0 2px #c97b1a,0 2px 6px rgba(0,0,0,.12)}
-.tl-connector{position:absolute;top:50%;right:-6px;transform:translateY(-50%);width:12px;height:12px;border-radius:50%;background:#c97b1a;cursor:crosshair;z-index:20;display:flex;align-items:center;justify-content:center;transition:transform .15s}
-.tl-connector:hover{transform:translateY(-50%) scale(1.4)}
+.tl-connector{position:absolute;top:50%;right:-10px;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;background:#c97b1a;border:2px solid #fff;cursor:grab;z-index:30;display:flex;align-items:center;justify-content:center;transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.tl-connector:hover{transform:translateY(-50%) scale(1.3);background:#e05c1a;box-shadow:0 3px 10px rgba(0,0,0,.35)}
+.tl-connector:active{cursor:grabbing}
+.tl-conn-active{outline:3px solid #c97b1a;outline-offset:2px}
+.tl-row-target:hover{background:#eaf4ff !important;outline:2px dashed #5b8dee;outline-offset:-2px}
 .tl-no-date{font-size:11px;color:#a8a49c;text-align:center;padding:1rem;grid-column:1/-1}
 @media(max-width:640px){.board{grid-template-columns:1fr}.mets{grid-template-columns:repeat(2,1fr)}.pgrid{grid-template-columns:1fr}}
 </style>
@@ -250,7 +253,7 @@ body{font-family:system-ui,sans-serif;font-size:13px;background:#f6f5f2;color:#1
     <div id="v-gantt" style="display:none"><div class="gw"><div class="gantt" id="gantt"></div></div></div>
     <div id="v-timeline" style="display:none">
       <div class="tl-toolbar">
-        <span id="tl-hint" style="font-size:11px;color:#a8a49c">💡 คลิกจุด 🟠 ขวาการ์ด เพื่อเชื่อมงาน (หรือลากก็ได้) · คลิกขวาที่เส้นเพื่อลบ</span>
+        <span id="tl-hint" style="font-size:11px;color:#a8a49c">💡 คลิกจุด <span style="color:#c97b1a">●</span> ขวาการ์ด เพื่อเชื่อมงาน · คลิกขวาที่เส้นเพื่อลบ</span>
         <button class="btn btn-g" onclick="clearAllDeps()" style="font-size:11px;padding:4px 10px">🗑 ล้างเส้นทั้งหมด</button>
       </div>
       <div class="tl-wrap" id="tl-wrap">
@@ -306,49 +309,373 @@ const SEED_PROJS=[
 ];
 const SEED_TASKS={
 'proj_p':[
-  {id:'p1',name:'ICR Pitch Deck — รอคุยดู data support',col:'todo',tags:['ICR'],due:'2026-05-25',subs:[
-    {id:'p1a',name:'นัดประชุมกับทีมที่เกี่ยวข้อง',done:false},
-    {id:'p1b',name:'รวบรวม data ที่มีอยู่แล้ว',done:false},
-    {id:'p1c',name:'สรุป gap ว่าต้องการ data เพิ่มอะไร',done:false}]},
-  {id:'p2',name:'ICR Pitch Deck — Strategy MO / ECL',col:'todo',tags:['ICR'],due:'',subs:[
-    {id:'p2a',name:'ระบุพอร์ตที่ต้องการขึ้น MO',done:false},
-    {id:'p2b',name:'กำหนด timeline การใช้กับ ECL จริง',done:false},
-    {id:'p2c',name:'จัดทำ draft strategy document',done:false}]},
-  {id:'p3',name:'LGD Research — Compare KKP, ING, Other Bank',col:'todo',tags:['LGD'],due:'2026-05-27',subs:[
-    {id:'p3a',name:'รวบรวม LGD methodology ของ KKP',done:false},
-    {id:'p3b',name:'รวบรวม LGD methodology ของ ING',done:false},
-    {id:'p3c',name:'รวบรวมข้อมูลธนาคารอื่น (TBD)',done:false},
-    {id:'p3d',name:'สรุป comparison table',done:false}]},
-  {id:'p4',name:'PD Proxy (Lombard/PPF/SF+CBG) — On hold',col:'todo',tags:['PD'],due:'',subs:[
-    {id:'p4a',name:'Review สำรองปัจจุบันเทียบ threshold',done:false},
-    {id:'p4b',name:'เตรียม supporting analysis ไว้รอ',done:false}]},
-  {id:'p5',name:'PD FWL — ปรับ FWL พอร์ต CBG + External rating',col:'todo',tags:['FWL'],due:'2026-05-27',subs:[
-    {id:'p5a',name:'วิเคราะห์ FWL ปัจจุบันของพอร์ต CBG',done:false},
-    {id:'p5b',name:'วิเคราะห์กลุ่มที่ใช้ External rating',done:false},
-    {id:'p5c',name:'คำนวณ adjusted FWL',done:false},
-    {id:'p5d',name:'ทดสอบผลกระทบ',done:false}]},
-  {id:'p6',name:'PD FWL — สอบถามวิธีปรับ FWL จากธนาคารอื่น',col:'todo',tags:['FWL'],due:'',subs:[
-    {id:'p6a',name:'จัดทำ questionnaire / ประเด็นที่ถาม',done:false},
-    {id:'p6b',name:'ติดต่อธนาคารที่ 1',done:false},
-    {id:'p6c',name:'ติดต่อธนาคารที่ 2',done:false},
-    {id:'p6d',name:'สรุปผล',done:false}]},
-  {id:'p7',name:'SICR External Rating — รอเข้าบอร์ด ROC',col:'todo',tags:['Board'],due:'',subs:[
-    {id:'p7a',name:'เตรียม board paper',done:false},
-    {id:'p7b',name:'ส่งให้พี่ต๊ะ review',done:false},
-    {id:'p7c',name:'Submit เข้า ROC agenda',done:false}]},
-  {id:'p8',name:'LGD — Assessment collateral approach in APT',col:'todo',tags:['LGD'],due:'',subs:[
-    {id:'p8a',name:'ทบทวน collateral approach ปัจจุบัน',done:false},
-    {id:'p8b',name:'ประเมิน APT methodology',done:false},
-    {id:'p8c',name:'จัดทำ recommendation',done:false}]},
-  {id:'p9',name:'LGD — Reassess impact (CL 45% / CBG unchanged)',col:'todo',tags:['LGD'],due:'',subs:[
-    {id:'p9a',name:'คำนวณ impact กรณี CL ใช้ 45% LGD',done:false},
-    {id:'p9b',name:'ยืนยัน CBG remains unchanged',done:false},
-    {id:'p9c',name:'สรุป overall ECL impact',done:false}]},
-  {id:'p10',name:'Prepare Insurance Template for CA',col:'todo',tags:['อื่นๆ'],due:'2026-05-29',subs:[
-    {id:'p10a',name:'ออกแบบ factor template ใหม่',done:false},
-    {id:'p10b',name:'ทดสอบ template กับข้อมูลตัวอย่าง',done:false},
-    {id:'p10c',name:'ส่ง CA review',done:false},
-    {id:'p10d',name:'Finalize template',done:false}]},
+  {
+    "col": "done",
+    "due": "2026-05-25",
+    "id": "p1",
+    "name": "ICR Pitch Deck — รอคุยดู data support",
+    "subs": [
+      {
+        "done": true,
+        "id": "p1a",
+        "name": "นัดประชุมกับทีมที่เกี่ยวข้อง",
+        "due": ""
+      },
+      {
+        "done": true,
+        "id": "p1b",
+        "name": "รวบรวม data ที่มีอยู่แล้ว",
+        "due": ""
+      },
+      {
+        "done": true,
+        "id": "u1781087659457",
+        "name": "สรุป gap ว่าต้องการ data เพิ่มอะไร",
+        "due": ""
+      }
+    ],
+    "tags": [
+      "ICR"
+    ]
+  },
+  {
+    "col": "inprog",
+    "due": "2026-06-26",
+    "id": "p10",
+    "name": "Prepare Insurance Template for CA",
+    "subs": [
+      {
+        "done": true,
+        "due": "2026-06-09",
+        "id": "p10a",
+        "name": "ออกแบบ factor template ใหม่"
+      },
+      {
+        "done": false,
+        "due": "2026-06-19",
+        "id": "p10b",
+        "name": "ทดสอบ template กับข้อมูลตัวอย่าง"
+      },
+      {
+        "done": false,
+        "due": "2026-06-19",
+        "id": "p10c",
+        "name": "ส่ง CA review"
+      },
+      {
+        "done": false,
+        "due": "2026-06-26",
+        "id": "p10d",
+        "name": "Finalize template"
+      }
+    ],
+    "tags": [
+      "อื่นๆ"
+    ]
+  },
+  {
+    "col": "inprog",
+    "due": "",
+    "id": "p2",
+    "name": "ICR Pitch Deck — Strategy MO / ECL",
+    "subs": [
+      {
+        "done": true,
+        "id": "p2a",
+        "name": "ระบุพอร์ตที่ต้องการขึ้น MO",
+        "due": ""
+      },
+      {
+        "done": true,
+        "id": "p2b",
+        "name": "กำหนด timeline การใช้กับ ECL จริง",
+        "due": ""
+      },
+      {
+        "done": true,
+        "id": "p2c",
+        "name": "จัดทำ draft strategy document",
+        "due": ""
+      },
+      {
+        "id": "s1781146251975",
+        "name": "Discuss with P'Ta",
+        "due": "2026-06-11",
+        "done": false
+      },
+      {
+        "id": "s1781146262882",
+        "name": "Discuss wth CA",
+        "due": "2026-06-16",
+        "done": false
+      },
+      {
+        "id": "s1781146264419",
+        "name": "Board Presentation",
+        "due": "2026-06-30",
+        "done": false
+      }
+    ],
+    "tags": [
+      "ICR"
+    ]
+  },
+  {
+    "col": "todo",
+    "due": "2026-05-27",
+    "id": "p3",
+    "name": "LGD Research — Compare KKP, ING, Other Bank",
+    "subs": [
+      {
+        "done": false,
+        "id": "p3a",
+        "name": "รวบรวม LGD methodology ของ KKP",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p3b",
+        "name": "รวบรวม LGD methodology ของ ING",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p3c",
+        "name": "รวบรวมข้อมูลธนาคารอื่น (TBD)",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p3d",
+        "name": "สรุป comparison table",
+        "due": ""
+      }
+    ],
+    "tags": [
+      "LGD"
+    ]
+  },
+  {
+    "col": "todo",
+    "due": "",
+    "id": "p4",
+    "name": "PD Proxy (Lombard/PPF/SF+CBG) — On hold",
+    "subs": [
+      {
+        "done": false,
+        "id": "p4a",
+        "name": "Review สำรองปัจจุบันเทียบ threshold",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p4b",
+        "name": "เตรียม supporting analysis ไว้รอ",
+        "due": ""
+      }
+    ],
+    "tags": [
+      "PD"
+    ]
+  },
+  {
+    "col": "todo",
+    "due": "2026-05-27",
+    "id": "p5",
+    "name": "PD FWL — ปรับ FWL พอร์ต CBG + External rating",
+    "subs": [
+      {
+        "done": false,
+        "id": "p5a",
+        "name": "วิเคราะห์ FWL ปัจจุบันของพอร์ต CBG",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p5b",
+        "name": "วิเคราะห์กลุ่มที่ใช้ External rating",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p5c",
+        "name": "คำนวณ adjusted FWL",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p5d",
+        "name": "ทดสอบผลกระทบ",
+        "due": ""
+      }
+    ],
+    "tags": [
+      "FWL"
+    ]
+  },
+  {
+    "col": "todo",
+    "due": "",
+    "id": "p6",
+    "name": "PD FWL — สอบถามวิธีปรับ FWL จากธนาคารอื่น",
+    "subs": [
+      {
+        "done": false,
+        "id": "p6a",
+        "name": "จัดทำ questionnaire / ประเด็นที่ถาม",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p6b",
+        "name": "ติดต่อธนาคารที่ 1",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p6c",
+        "name": "ติดต่อธนาคารที่ 2",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p6d",
+        "name": "สรุปผล",
+        "due": ""
+      }
+    ],
+    "tags": [
+      "FWL"
+    ]
+  },
+  {
+    "col": "todo",
+    "due": "",
+    "id": "p7",
+    "name": "SICR External Rating — รอเข้าบอร์ด ROC",
+    "subs": [
+      {
+        "done": false,
+        "id": "p7a",
+        "name": "เตรียม board paper",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p7b",
+        "name": "ส่งให้พี่ต๊ะ review",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p7c",
+        "name": "Submit เข้า ROC agenda",
+        "due": ""
+      }
+    ],
+    "tags": [
+      "Board"
+    ]
+  },
+  {
+    "col": "inprog",
+    "due": "",
+    "id": "p8",
+    "name": "LGD — Assessment collateral approach in APT",
+    "subs": [
+      {
+        "done": false,
+        "id": "p8a",
+        "name": "ทบทวน collateral approach ปัจจุบัน",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p8b",
+        "name": "ประเมิน APT methodology",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p8c",
+        "name": "จัดทำ recommendation",
+        "due": ""
+      }
+    ],
+    "tags": [
+      "LGD"
+    ]
+  },
+  {
+    "col": "todo",
+    "due": "",
+    "id": "p9",
+    "name": "LGD — Reassess impact (CL 45% / CBG unchanged)",
+    "subs": [
+      {
+        "done": false,
+        "id": "p9a",
+        "name": "คำนวณ impact กรณี CL ใช้ 45% LGD",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p9b",
+        "name": "ยืนยัน CBG remains unchanged",
+        "due": ""
+      },
+      {
+        "done": false,
+        "id": "p9c",
+        "name": "สรุป overall ECL impact",
+        "due": ""
+      }
+    ],
+    "tags": [
+      "LGD"
+    ]
+  },
+  {
+    "col": "inprog",
+    "due": "",
+    "id": "u1781087929760",
+    "name": "MO Q2/2026",
+    "subs": [
+      {
+        "done": false,
+        "id": "s1781087832683",
+        "name": "Bottom-up List",
+        "due": "2026-06-12"
+      },
+      {
+        "done": false,
+        "id": "s1781087842961",
+        "name": "Systematic",
+        "due": "2026-06-12"
+      },
+      {
+        "done": false,
+        "id": "s1781087861048",
+        "name": "MO War framework discussion",
+        "due": "2026-06-15"
+      },
+      {
+        "done": false,
+        "id": "s1781087878458",
+        "name": "MO War result",
+        "due": "2026-06-19"
+      },
+      {
+        "id": "s1781146090796",
+        "name": "์Note เรื่อง flow ของ MO War",
+        "due": "2026-06-15",
+        "done": false
+      }
+    ],
+    "tags": [
+      "อื่นๆ"
+    ]
+  }
 ],
 'proj_r':[
   {id:'r1',name:'Monthend',col:'todo',tags:['อื่นๆ'],due:'',subs:[]},
@@ -596,14 +923,34 @@ window.openModal=function(id,col){
   </div></div>`;
   rSL();setTimeout(()=>document.getElementById('mn')?.focus(),50);
 }
-function rSL(){const el=document.getElementById('sle');if(!el)return;el.innerHTML=msubs.map((s,i)=>`<div class="ser"><input type="text" value="${e(s.name||'')}" placeholder="ชื่อ sub-task..." oninput="msubs[${i}].name=this.value" style="flex:2"><input type="date" value="${s.due||''}" oninput="msubs[${i}].due=this.value" style="flex:1;min-width:110px" title="Due date"><button class="sdb" onclick="rmSF(${i})">✕</button></div>`).join('');}
-window.addSF=function(){msubs.push({id:'s'+Date.now(),name:'',due:'',done:false});rSL();const ins=document.querySelectorAll('#sle input');if(ins.length)ins[ins.length-1].focus();}
-window.rmSF=function(i){msubs.splice(i,1);rSL();}
+function syncMsubs(){
+  // Read current input values back into msubs array before any re-render
+  const rows=document.querySelectorAll('#sle .ser');
+  rows.forEach((row,i)=>{
+    if(!msubs[i])return;
+    const inps=row.querySelectorAll('input');
+    if(inps[0])msubs[i].name=inps[0].value;
+    if(inps[1])msubs[i].due=inps[1].value;
+  });
+}
+function rSL(){
+  const el=document.getElementById('sle');if(!el)return;
+  el.innerHTML=msubs.map((s,i)=>`<div class="ser"><input type="text" value="${e(s.name||'')}" placeholder="ชื่อ sub-task..." style="flex:2"><input type="date" value="${s.due||''}" style="flex:1;min-width:110px" title="Due date"><button class="sdb" onclick="rmSF(${i})">✕</button></div>`).join('');
+  // Attach change listeners (avoid oninput in innerHTML to prevent stale closures)
+  const rows=el.querySelectorAll('.ser');
+  rows.forEach((row,i)=>{
+    const inps=row.querySelectorAll('input');
+    if(inps[0])inps[0].addEventListener('input',()=>{if(msubs[i])msubs[i].name=inps[0].value;});
+    if(inps[1])inps[1].addEventListener('input',()=>{if(msubs[i])msubs[i].due=inps[1].value;});
+  });
+}
+window.addSF=function(){syncMsubs();msubs.push({id:'s'+Date.now(),name:'',due:'',done:false});rSL();const rows=document.querySelectorAll('#sle .ser');if(rows.length){const inp=rows[rows.length-1].querySelector('input');if(inp)inp.focus();}}
+window.rmSF=function(i){syncMsubs();msubs.splice(i,1);rSL();}
 window.savM=function(){
   const n=document.getElementById('mn')?.value.trim();if(!n)return;
   const col=document.getElementById('mc').value,due=document.getElementById('md').value;
   const tags=[...document.querySelectorAll('.modal .topt.sel')].map(el=>el.textContent.trim());
-  const sleRows=document.querySelectorAll('#sle .ser');sleRows.forEach((row,i)=>{if(msubs[i]){const inps=row.querySelectorAll('input');msubs[i].name=inps[0]?.value.trim()||'';msubs[i].due=inps[1]?.value||'';}});
+  syncMsubs();
   const subs=msubs.filter(s=>s.name);let cid;
   if(eid){const t=tasks.find(x=>x.id===eid);if(t){t.name=n;t.col=col;t.due=due;t.tags=tags;t.subs=subs;cid=t.id;}}
   else{const nt={id:'u'+Date.now(),name:n,col,due,tags,subs};tasks.push(nt);cid=nt.id;}
@@ -705,15 +1052,15 @@ function renderTimeline(){
         ${cellsHtml}
         <div class="tl-bar" id="tlbar-${t.id}"
           style="left:${barLeft-LABEL_W}px;width:${barW}px;background:${bc};${t.isSub?'top:14px;height:24px;font-size:10px;opacity:0.85':''}"
-          title="${e(t.name)} — ${fmtD(t.due)}">
+          title="${e(t.name)} — ${fmtD(t.due)}" onclick="onTLBarClick(event,'${t.id}',\"${clickFn}\")">
           ${e(t.name.length>18?t.name.slice(0,18)+'…':t.name)}
           <div class="tl-connector"
             draggable="true"
             ondragstart="onTLConnStart(event,'${t.id}')"
             ondragend="onTLConnEnd(event)"
-            onclick="event.stopPropagation();onTLConnClick('${t.id}')"
-            title="คลิก หรือ ลาก เพื่อเชื่อมกับงานอื่น">
-            <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="white" opacity="0.9"/></svg>
+            onclick="onTLConnClick(event,'${t.id}')"
+            title="คลิกเพื่อเชื่อมงาน">
+            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="white" opacity="0.95"/><circle cx="5" cy="5" r="2" fill="#c97b1a"/></svg>
           </div>
         </div>
       </div>
@@ -769,41 +1116,44 @@ function drawDepArrows(){
   });
 }
 
-// ── Connect: Drag OR Click-to-connect ──
-let tlConnMode=false; // click mode: first click selects source, second click selects target
-
-function setTLConnMode(active,fromId){
-  tlConnMode=active;
-  // Update toolbar hint
-  const hint=document.getElementById('tl-hint');
-  if(hint){
-    if(active)hint.textContent=`🔗 เลือก "${fromId}" → คลิกงานที่จะเชื่อมต่อ (กด Esc ยกเลิก)`;
-    else hint.textContent='💡 คลิกจุด 🟠 ขวาการ์ด เพื่อเชื่อมงาน (หรือลากก็ได้)';
-  }
-  document.querySelectorAll('.tl-row').forEach(r=>{
-    r.style.cursor=active&&r.dataset.tid!==fromId?'crosshair':'';
-    if(r.dataset.tid===fromId)r.style.background='#fff8e8';
-    else r.style.background='';
-  });
-}
-
-window.onTLConnClick=function(tid){
-  if(!tlConnMode){
-    // Start connect mode
-    tlConnFromId=tid;
-    setTLConnMode(true,tid);
-    document.getElementById('tlbar-'+tid)?.classList.add('dep-source');
-  }
-}
+// ── Connect: Click-to-connect (primary) + Drag (fallback) ──
+let tlConnMode=false;
 let tlConnFromId=null;
-window.onTLRowClick=async function(ev,toId){
-  if(!tlConnMode||!tlConnFromId||tlConnFromId===toId)return;
-  ev.stopPropagation();
-  const fromId=tlConnFromId;
+
+function cancelConnect(){
+  tlConnMode=false;
   tlConnFromId=null;
-  setTLConnMode(false,'');
-  document.querySelectorAll('.tl-bar').forEach(b=>b.classList.remove('dep-source'));
-  document.querySelectorAll('.tl-row').forEach(r=>{r.style.background='';r.style.cursor='';});
+  tlDragging=null;
+  document.querySelectorAll('.tl-bar').forEach(b=>{b.classList.remove('dep-source');b.classList.remove('tl-conn-active');});
+  document.querySelectorAll('.tl-row').forEach(r=>{r.style.background='';r.style.cursor='';r.classList.remove('tl-row-target');});
+  const hint=document.getElementById('tl-hint');
+  if(hint)hint.innerHTML='💡 คลิกจุด <span style="color:#c97b1a">●</span> ขวาการ์ด เพื่อเชื่อมงาน · คลิกขวาที่เส้นเพื่อลบ';
+}
+
+function startConnect(fromId){
+  cancelConnect();
+  tlConnMode=true;
+  tlConnFromId=fromId;
+  const bar=document.getElementById('tlbar-'+fromId);
+  if(bar)bar.classList.add('dep-source');
+  // highlight all other rows as targets
+  document.querySelectorAll('.tl-row').forEach(r=>{
+    if(r.dataset.tid!==fromId){
+      r.classList.add('tl-row-target');
+      r.style.cursor='crosshair';
+    } else {
+      r.style.background='#fff8e8';
+    }
+  });
+  const hint=document.getElementById('tl-hint');
+  const name=bar?bar.textContent.trim().slice(0,20):'';
+  if(hint)hint.innerHTML=`🔗 <strong style="color:#c97b1a">"${name}"</strong> → คลิกการ์ดปลายทาง &nbsp;<span style="color:#a8a49c;font-size:10px">[Esc ยกเลิก]</span>`;
+}
+
+async function finishConnect(toId){
+  if(!tlConnFromId||tlConnFromId===toId){cancelConnect();return;}
+  const fromId=tlConnFromId;
+  cancelConnect();
   if(!deps[fromId])deps[fromId]=[];
   if(!deps[fromId].includes(toId)){
     deps[fromId].push(toId);
@@ -811,44 +1161,78 @@ window.onTLRowClick=async function(ev,toId){
     drawDepArrows();
   }
 }
-document.addEventListener('keydown',function(ev){
-  if(ev.key==='Escape'&&tlConnMode){
-    tlConnFromId=null;
-    setTLConnMode(false,'');
-    document.querySelectorAll('.tl-bar').forEach(b=>b.classList.remove('dep-source'));
-    document.querySelectorAll('.tl-row').forEach(r=>{r.style.background='';r.style.cursor='';});
-    if(tlDragging){document.getElementById('tlbar-'+tlDragging)?.classList.remove('dep-source');tlDragging=null;}
+
+// Connector dot click — start or finish connect
+window.onTLConnClick=function(ev,tid){
+  ev.stopPropagation();
+  if(tlConnMode){
+    // clicking another connector = connect to that task
+    finishConnect(tid);
+  } else {
+    startConnect(tid);
   }
+}
+
+// Row click — finish connect if in connect mode
+window.onTLRowClick=function(ev,toId){
+  if(!tlConnMode)return;
+  ev.stopPropagation();
+  finishConnect(toId);
+}
+
+// Bar click — finish connect if in connect mode, else open modal
+window.onTLBarClick=function(ev,tid,modalFn){
+  if(tlConnMode){ev.stopPropagation();finishConnect(tid);return;}
+  eval(modalFn);
+}
+
+// Escape to cancel
+document.addEventListener('keydown',function(ev){
+  if(ev.key==='Escape'&&tlConnMode)cancelConnect();
 });
 
-// Drag connect (still supported)
+// Click outside timeline to cancel
+document.addEventListener('click',function(ev){
+  if(!tlConnMode)return;
+  const wrap=document.getElementById('tl-wrap');
+  if(wrap&&!wrap.contains(ev.target))cancelConnect();
+});
+
+// ── Drag connect (secondary method) ──
 window.onTLConnStart=function(ev,tid){
-  if(tlConnMode){ev.preventDefault();return;}
+  ev.stopPropagation();
   tlDragging=tid;
   ev.dataTransfer.setData('text/plain',tid);
   ev.dataTransfer.effectAllowed='link';
   document.getElementById('tlbar-'+tid)?.classList.add('dep-source');
-  ev.stopPropagation();
+  // highlight targets
+  document.querySelectorAll('.tl-row').forEach(r=>{
+    if(r.dataset.tid!==tid){r.classList.add('tl-row-target');}
+  });
 }
 window.onTLConnEnd=function(ev){
   if(tlDragging)document.getElementById('tlbar-'+tlDragging)?.classList.remove('dep-source');
   tlDragging=null;
-  document.querySelectorAll('.tl-row').forEach(r=>{r.style.background='';r.style.cursor='';});
+  document.querySelectorAll('.tl-row').forEach(r=>{r.style.background='';r.style.cursor='';r.classList.remove('tl-row-target');});
 }
 window.onTLDragOver=function(ev,tid){
   if(!tlDragging||tlDragging===tid)return;
   ev.preventDefault();
-  document.getElementById('tlrow-'+tid).style.background='#eaf0fb';
+  ev.dataTransfer.dropEffect='link';
+  document.getElementById('tlrow-'+tid).style.background='#ddeeff';
 }
 window.onTLDragLeave=function(ev,tid){
-  if(!tlConnMode)document.getElementById('tlrow-'+tid).style.background='';
+  const row=document.getElementById('tlrow-'+tid);
+  if(row)row.style.background='';
 }
 window.onTLDrop=async function(ev,toId){
   ev.preventDefault();
-  if(!tlConnMode)document.getElementById('tlrow-'+toId).style.background='';
-  if(!tlDragging||tlDragging===toId)return;
+  const row=document.getElementById('tlrow-'+toId);
+  if(row)row.style.background='';
+  if(!tlDragging||tlDragging===toId){tlDragging=null;return;}
   const fromId=tlDragging;tlDragging=null;
   document.getElementById('tlbar-'+fromId)?.classList.remove('dep-source');
+  document.querySelectorAll('.tl-row').forEach(r=>{r.classList.remove('tl-row-target');});
   if(!deps[fromId])deps[fromId]=[];
   if(!deps[fromId].includes(toId)){
     deps[fromId].push(toId);
@@ -856,10 +1240,12 @@ window.onTLDrop=async function(ev,toId){
     drawDepArrows();
   }
 }
-// Remove single dep by clicking arrow (right-click)
+
+// Remove dep — right-click on arrow
 window.removeDep=async function(fromId,toId){
   if(!deps[fromId])return;
   deps[fromId]=deps[fromId].filter(x=>x!==toId);
+  if(deps[fromId].length===0)delete deps[fromId];
   await saveDeps(pid);
   drawDepArrows();
 }
